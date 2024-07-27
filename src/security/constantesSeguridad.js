@@ -1,0 +1,5 @@
+const FECHA_EXPIRACION= 86400000
+const HEADER_STRING= "Authorization"
+const TOKEN_PREFIJO= "Bearer "
+
+module.exports = {FECHA_EXPIRACION, HEADER_STRING, TOKEN_PREFIJO}
