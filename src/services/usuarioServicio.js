@@ -10,8 +10,15 @@ const crearUsuario = async (usuario) => {
         throw new Error("Datos vacíos o incorrectos");
     }
 
-    const email = await usuarioRepositorio.buscarCorreo(usuario.email);
-    if (email) throw new Error("El correo ya fue registrado.");
+    const usuarioExistente = await usuarioRepositorio.leerUsuarioPorEmail(usuario.email);
+    if (usuarioExistente) {
+        if (usuarioExistente.verificado) {
+            throw new Error("El correo ya fue registrado.");
+        } else {
+            await enviarCodigoVerificacion(usuarioExistente.idUsuario, usuarioExistente.email, usuarioExistente.intentosEnvio + 1);
+            return usuarioExistente;
+        }
+    }
 
     usuario.idUsuario = uuidv4();
     usuario.passwordEncp = bcrypt.hashSync(usuario.password, 10);
@@ -19,8 +26,8 @@ const crearUsuario = async (usuario) => {
     usuario.intentosEnvio = 0;
 
     await usuarioRepositorio.crear(new UsuarioEntity(usuario));
-    await enviarCodigoVerificacion(usuario.idUsuario, usuario.email);
-    
+    await enviarCodigoVerificacion(usuario.idUsuario, usuario.email, 1);
+
     return await usuarioRepositorio.leerUsuario(usuario.idUsuario);
 }
 
@@ -33,7 +40,7 @@ const leerUsuarioLogin = async (email) => {
     return usuario;
 }
 
-const enviarCodigoVerificacion = async (idUsuario, email) => {
+const enviarCodigoVerificacion = async (idUsuario, email, intentosEnvio) => {
     const usuario = await usuarioRepositorio.leerUsuario(idUsuario);
     
     const ahora = new Date();
@@ -41,9 +48,12 @@ const enviarCodigoVerificacion = async (idUsuario, email) => {
         throw new Error("Has alcanzado el límite de intentos. Intenta nuevamente más tarde.");
     }
 
-    if (usuario.intentosEnvio >= 4) {
+    // Resetear intentos de envío si el bloqueo ha expirado
+    if (usuario.bloqueadoHasta && ahora >= new Date(usuario.bloqueadoHasta)) {
+        intentosEnvio = 1; // Reiniciar el contador de intentos
+    } else if (intentosEnvio > 3) {
         const bloqueadoHasta = new Date(ahora.getTime() + 30 * 60 * 1000); // 30 minutos
-        await usuarioRepositorio.actualizarIntentosEnvio(idUsuario, usuario.intentosEnvio, bloqueadoHasta);
+        await usuarioRepositorio.actualizarIntentosEnvio(idUsuario, intentosEnvio, bloqueadoHasta);
         throw new Error("Has alcanzado el límite de intentos. Intenta nuevamente en 30 minutos.");
     }
 
@@ -51,10 +61,10 @@ const enviarCodigoVerificacion = async (idUsuario, email) => {
     const expiracion = Date.now() + 10 * 60 * 1000; // 10 minutos
 
     const codigoVerificacion = new UsuarioCodigoVerificacionEntity({ idUsuario, codigo, expiracion });
+    await usuarioRepositorio.eliminarCodigosPrevios(idUsuario); // Elimina los códigos previos antes de crear el nuevo
     await usuarioRepositorio.crearCodigo(codigoVerificacion);
 
-    usuario.intentosEnvio++;
-    await usuarioRepositorio.actualizarIntentosEnvio(idUsuario, usuario.intentosEnvio);
+    await usuarioRepositorio.actualizarIntentosEnvio(idUsuario, intentosEnvio);
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -79,10 +89,10 @@ const enviarCodigoVerificacion = async (idUsuario, email) => {
 }
 
 const verificarCodigo = async (idUsuario, codigo) => {
-    const codigoVerificacion = await usuarioRepositorio.obtenerCodigo(idUsuario);
+    const codigoVerificacion = await usuarioRepositorio.obtenerCodigoMasReciente(idUsuario);
 
     if (!codigoVerificacion || codigoVerificacion.codigo !== codigo || Date.now() > codigoVerificacion.expiracion) {
-        if (Date.now() > codigoVerificacion.expiracion) {
+        if (codigoVerificacion && Date.now() > codigoVerificacion.expiracion) {
             await usuarioRepositorio.eliminarUsuario(idUsuario);
         }
         throw new Error("Código inválido o ha expirado");

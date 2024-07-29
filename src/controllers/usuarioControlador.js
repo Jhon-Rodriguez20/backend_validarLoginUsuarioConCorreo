@@ -29,4 +29,4 @@ const postSignin = (req, res) => {
     }
 }
 
-module.exports = { postUsuario, postSignin, postVerificarCodigo };
+module.exports = { postUsuario, postSignin, postVerificarCodigo }

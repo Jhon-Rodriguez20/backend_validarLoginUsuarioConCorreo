@@ -19,6 +19,5 @@ CREATE TABLE usuarioCodigoVerificacion (
     `idUsuario` VARCHAR(50) NOT NULL,
     `codigo` VARCHAR(6) NOT NULL,
     `expiracion` BIGINT NOT NULL,
-    `intentosEnvio` INT DEFAULT 0,
     FOREIGN KEY (`idUsuario`) REFERENCES usuario(`idUsuario`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -26,6 +26,24 @@ const leerUsuarioLogin = async (email) => {
     return rows[0];
 }
 
+const leerUsuarioPorEmail = async (email) => {
+    const connection = await conexion.conexionMysql();
+    const query = `
+        SELECT
+            idUsuario,
+            nombre,
+            email,
+            intentosEnvio,
+            verificado,
+            bloqueadoHasta
+        FROM usuario
+        WHERE email = ?
+    `;
+    const [rows] = await connection.query(query, [email]);
+    connection.release();
+    return rows[0];
+}
+
 const leerUsuario = async (idUsuario) => {
     const connection = await conexion.conexionMysql();
     const query = `
@@ -40,14 +58,6 @@ const leerUsuario = async (idUsuario) => {
         WHERE idUsuario = ?
     `;
     const [rows] = await connection.query(query, [idUsuario]);
-    connection.release();
-    return rows[0];
-}
-
-const buscarCorreo = async (email) => {
-    const connection = await conexion.conexionMysql();
-    const query = "SELECT email, verificado FROM usuario WHERE email = ? AND verificado = TRUE";
-    const [rows] = await connection.query(query, [email]);
     connection.release();
     return rows[0];
 }
@@ -67,9 +77,9 @@ const crearCodigo = async (codigoVerificacion) => {
     }
 }
 
-const obtenerCodigo = async (idUsuario) => {
+const obtenerCodigoMasReciente = async (idUsuario) => {
     const connection = await conexion.conexionMysql();
-    const query = "SELECT * FROM usuarioCodigoVerificacion WHERE idUsuario = ?";
+    const query = "SELECT * FROM usuarioCodigoVerificacion WHERE idUsuario = ? ORDER BY expiracion DESC LIMIT 1";
     const [rows] = await connection.query(query, [idUsuario]);
     connection.release();
     return rows[0];
@@ -89,9 +99,20 @@ const eliminarCodigo = async (idUsuario) => {
     connection.release();
 }
 
+const eliminarCodigosPrevios = async (idUsuario) => {
+    const connection = await conexion.conexionMysql();
+    const query = "DELETE FROM usuarioCodigoVerificacion WHERE idUsuario = ?";
+    await connection.query(query, [idUsuario]);
+    connection.release();
+}
+
 const actualizarIntentosEnvio = async (idUsuario, intentosEnvio, bloqueadoHasta = null) => {
     const connection = await conexion.conexionMysql();
-    const query = "UPDATE usuario SET intentosEnvio = ?, bloqueadoHasta = ? WHERE idUsuario = ?";
+    const query = `
+        UPDATE usuario
+        SET intentosEnvio = ?, bloqueadoHasta = ?
+        WHERE idUsuario = ?
+    `;
     await connection.query(query, [intentosEnvio, bloqueadoHasta, idUsuario]);
     connection.release();
 }
@@ -112,6 +133,6 @@ const eliminarUsuario = async (idUsuario) => {
     }
 }
 
-module.exports = {crear, leerUsuarioLogin, leerUsuario, buscarCorreo, crearCodigo,
-    obtenerCodigo, verificarUsuario, eliminarCodigo, actualizarIntentosEnvio, eliminarUsuario
+module.exports = {crear, leerUsuarioLogin, leerUsuario, crearCodigo, leerUsuarioPorEmail,
+    obtenerCodigoMasReciente, verificarUsuario, eliminarCodigo, eliminarCodigosPrevios, actualizarIntentosEnvio, eliminarUsuario
 }

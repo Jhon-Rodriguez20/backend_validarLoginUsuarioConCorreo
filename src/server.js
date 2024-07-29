@@ -15,11 +15,8 @@ configuracionSeguridad(app);
 
 conexionMysql()
     .then(() => {
-        app.listen(PORT, HOST, () => {
-            console.log(`Escuchando por el servidor http://${HOST}:${PORT}`);
-        });
+        app.listen(PORT, HOST, () => {});
     })
-    .catch((err) => {
-        console.error("Error al conectar a la base de datos: ", err);
+    .catch(() => {
         process.exit();
     });
