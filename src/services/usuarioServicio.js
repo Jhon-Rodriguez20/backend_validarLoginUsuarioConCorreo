@@ -48,9 +48,8 @@ const enviarCodigoVerificacion = async (idUsuario, email, intentosEnvio) => {
         throw new Error("Has alcanzado el límite de intentos. Intenta nuevamente más tarde.");
     }
 
-    // Resetear intentos de envío si el bloqueo ha expirado
     if (usuario.bloqueadoHasta && ahora >= new Date(usuario.bloqueadoHasta)) {
-        intentosEnvio = 1; // Reiniciar el contador de intentos
+        intentosEnvio = 1;
     } else if (intentosEnvio > 3) {
         const bloqueadoHasta = new Date(ahora.getTime() + 30 * 60 * 1000); // 30 minutos
         await usuarioRepositorio.actualizarIntentosEnvio(idUsuario, intentosEnvio, bloqueadoHasta);
@@ -61,7 +60,7 @@ const enviarCodigoVerificacion = async (idUsuario, email, intentosEnvio) => {
     const expiracion = Date.now() + 10 * 60 * 1000; // 10 minutos
 
     const codigoVerificacion = new UsuarioCodigoVerificacionEntity({ idUsuario, codigo, expiracion });
-    await usuarioRepositorio.eliminarCodigosPrevios(idUsuario); // Elimina los códigos previos antes de crear el nuevo
+    await usuarioRepositorio.eliminarCodigosPrevios(idUsuario);
     await usuarioRepositorio.crearCodigo(codigoVerificacion);
 
     await usuarioRepositorio.actualizarIntentosEnvio(idUsuario, intentosEnvio);
@@ -69,16 +68,16 @@ const enviarCodigoVerificacion = async (idUsuario, email, intentosEnvio) => {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: 'xanderrap020713@gmail.com', // Asegúrate de usar el correo electrónico completo y correcto
-            pass: 'kgbs nbwd yqrv gevr' // Asegúrate de usar la contraseña de aplicación correcta
+            user: 'xanderrap020713@gmail.com',
+            pass: 'kgbs nbwd yqrv gevr'
         }
     });
 
     const correoOpciones = {
-        from: 'xanderrap020713@gmail.com', // Asegúrate de que coincida con el correo electrónico usado en el campo `user`
-        to: email, // Correo del destinatario
-        subject: 'CODIGO DE VERIFICACION', // Asunto del correo
-        text: `Tu código de verificación es ${codigo}.` // Cuerpo del correo
+        from: 'xanderrap020713@gmail.com',
+        to: email,
+        subject: 'CODIGO DE VERIFICACION',
+        text: `Tu código de verificación es ${codigo}.`
     };
 
     try {
