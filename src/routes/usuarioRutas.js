@@ -13,4 +13,13 @@ router.post("/login",
 router.post("/verificarCodigo",
     usuarioControlador.postVerificarCodigo);
 
+router.post("/solicitarRecuperacion",
+    usuarioControlador.postSolicitarRecuperacion);
+
+router.post("/verificarCodigoRecuperacion",
+    usuarioControlador.postVerificarCodigoRecuperacion);
+
+router.post("/actualizarContrasena",
+    usuarioControlador.postActualizarContrasena);
+
 module.exports = router;

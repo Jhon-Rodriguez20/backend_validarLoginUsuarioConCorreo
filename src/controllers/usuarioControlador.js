@@ -29,4 +29,35 @@ const postSignin = (req, res) => {
     }
 }
 
-module.exports = { postUsuario, postSignin, postVerificarCodigo }
+const postSolicitarRecuperacion = async (req, res) => {
+    try {
+        await usuarioServicio.solicitarRecuperacionContrasena(req.body.email);
+        res.status(200).json({ mensaje: 'Código de verificación enviado' });
+    } catch (err) {
+        res.status(400).json({ mensaje: 'Error al solicitar la recuperación de contraseña', error: err.message });
+    }
+}
+
+const postVerificarCodigoRecuperacion = async (req, res) => {
+    const { email, codigo } = req.body;
+    try {
+        const idUsuario = await usuarioServicio.verificarCodigoRecuperacion(email, codigo);
+        res.status(200).json({ mensaje: 'Código verificado correctamente', idUsuario });
+    } catch (err) {
+        res.status(400).json({ mensaje: 'Error al verificar el código', error: err.message });
+    }
+}
+
+const postActualizarContrasena = async (req, res) => {
+    const { idUsuario, nuevaContrasena } = req.body;
+    try {
+        await usuarioServicio.actualizarContrasena(idUsuario, nuevaContrasena);
+        res.status(200).json({ mensaje: 'Contraseña actualizada correctamente' });
+    } catch (err) {
+        res.status(400).json({ mensaje: 'Error al actualizar la contraseña', error: err.message });
+    }
+}
+
+module.exports = { postUsuario, postSignin, postVerificarCodigo,
+    postSolicitarRecuperacion, postVerificarCodigoRecuperacion, postActualizarContrasena
+}

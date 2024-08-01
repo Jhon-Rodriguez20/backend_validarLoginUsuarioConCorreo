@@ -133,6 +133,14 @@ const eliminarUsuario = async (idUsuario) => {
     }
 }
 
+const actualizarContrasena = async (idUsuario, nuevaContrasena) => {
+    const connection = await conexion.conexionMysql();
+    const query = "UPDATE usuario SET passwordEncp = ?, intentosEnvio = 1 WHERE idUsuario = ?";
+    await connection.query(query, [nuevaContrasena, idUsuario]);
+    connection.release();
+}
+
 module.exports = {crear, leerUsuarioLogin, leerUsuario, crearCodigo, leerUsuarioPorEmail,
-    obtenerCodigoMasReciente, verificarUsuario, eliminarCodigo, eliminarCodigosPrevios, actualizarIntentosEnvio, eliminarUsuario
+    obtenerCodigoMasReciente, verificarUsuario, eliminarCodigo, eliminarCodigosPrevios,
+    actualizarIntentosEnvio, eliminarUsuario, actualizarContrasena
 }
