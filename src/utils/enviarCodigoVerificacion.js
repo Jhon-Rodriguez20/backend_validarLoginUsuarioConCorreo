@@ -30,8 +30,8 @@ const enviarCodigoVerificacion = async (idUsuario, email, intentosEnvio) => {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: 'xanderrap020713@gmail.com',
-            pass: 'kgbs nbwd yqrv gevr'
+            user: 'xanderrap020713@gmail.com', // se canceló el servicio pipipipipipi
+            pass: 'kgbs nbwd yqrv fgdr'
         }
     });
 
